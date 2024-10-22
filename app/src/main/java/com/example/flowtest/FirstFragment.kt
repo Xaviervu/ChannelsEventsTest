@@ -10,6 +10,7 @@ import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
@@ -43,6 +44,10 @@ class FirstFragment : Fragment() {
         return binding.root
 
     }
+    private val eventObserver = Observer<String>{
+        showProgress(false)
+        findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -55,11 +60,20 @@ class FirstFragment : Fragment() {
             }
         }
 
-        viewModel.eventChannel.observe(viewLifecycleOwner) {
-            showProgress(false)
-            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
-        }
+//        viewModel.eventChannel.observe(viewLifecycleOwner) { // event chanel works even if event was fired when the fragment folded
+//            showProgress(false)
+//            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+//        }
 
+//        viewModel.eventLiveData.observe(viewLifecycleOwner,eventObserver) // SingleLiveEvent.observe with viewLifeCycleOwner works even if event was fired when the fragment folded
+
+        viewModel.eventLiveData.observeForever(eventObserver) // SingleLiveEvent.observeForever doesn't work even if event was fired when the fragment folded
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        viewModel.eventLiveData.removeObserver(eventObserver)
     }
 
     private fun showProgress(show: Boolean) {
