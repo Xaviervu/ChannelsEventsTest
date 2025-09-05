@@ -4,13 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
@@ -40,18 +38,29 @@ class FirstFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
 
+
+        activity?.onBackPressedDispatcher?.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (viewModel.progressbarShown) {
+                        viewModel.cancelNavigation()
+                        showProgress(false)
+                    } else {
+                        this.isEnabled = false
+                        requireActivity().onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            })
+
+
         _binding = FragmentFirstBinding.inflate(inflater, container, false)
         return binding.root
 
     }
-    private val eventObserver = Observer<String>{
-        showProgress(false)
-        findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         binding.apply {
             if (viewModel.progressbarShown) progressBar.visibility = View.VISIBLE
             buttonFirst.setOnClickListener {
@@ -60,28 +69,27 @@ class FirstFragment : Fragment() {
             }
         }
 
-//        viewModel.eventChannel.observe(viewLifecycleOwner) { // event chanel works even if event was fired when the fragment folded
-//            showProgress(false)
-//            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
-//        }
-
-//        viewModel.eventLiveData.observe(viewLifecycleOwner,eventObserver) // SingleLiveEvent.observe with viewLifeCycleOwner works even if event was fired when the fragment folded
-
-        viewModel.eventLiveData.observeForever(eventObserver) // SingleLiveEvent.observeForever doesn't work even if event was fired when the fragment folded
+        viewModel.eventChannel.observe(viewLifecycleOwner) { delay ->
+            if (delay > 0) {
+                showProgress(true, delay)
+            } else {
+                showProgress(false)
+                findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+            }
+        }
 
     }
 
-    override fun onPause() {
-        super.onPause()
-        viewModel.eventLiveData.removeObserver(eventObserver)
-    }
 
-    private fun showProgress(show: Boolean) {
+    private fun showProgress(show: Boolean, delay: Int = 0) {
         viewModel.progressbarShown = show
         with(binding) {
-
-            if (show) progressBar.visibility = View.VISIBLE else progressBar.visibility =
-                View.GONE
+            progressCounter.text = delay.toString()
+            if (show){ progress.visibility = View.VISIBLE }else {
+                progress.visibility =
+                    View.GONE
+                progressCounter.text = ""
+            }
         }
     }
 

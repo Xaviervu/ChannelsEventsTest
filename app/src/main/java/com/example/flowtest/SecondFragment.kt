@@ -33,7 +33,8 @@ class SecondFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.buttonSecond.setOnClickListener {
-            findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
+            val navController = findNavController()
+            navController.popBackStack()
         }
     }
 
