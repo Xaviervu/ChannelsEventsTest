@@ -5,6 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -55,6 +59,9 @@ class FirstFragment : Fragment() {
 
 
         _binding = FragmentFirstBinding.inflate(inflater, container, false)
+        binding.composeView.setContent {
+            DownCounterProgress()
+        }
         return binding.root
 
     }
@@ -80,6 +87,13 @@ class FirstFragment : Fragment() {
 
     }
 
+    @Composable
+    fun DownCounterProgress() {
+        Text("Hello from Compose!",
+                color = MaterialTheme.colors.onPrimary,
+            fontSize = 20.sp
+        )
+    }
 
     private fun showProgress(show: Boolean, delay: Int = 0) {
         viewModel.progressbarShown = show
