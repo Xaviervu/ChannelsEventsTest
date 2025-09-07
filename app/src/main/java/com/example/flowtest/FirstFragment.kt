@@ -5,10 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -16,22 +12,17 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.example.flowtest.compose.CountDownProgress
 import com.example.flowtest.databinding.FragmentFirstBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-
-/**
- * A simple [Fragment] subclass as the default destination in the navigation.
- */
 class FirstFragment : Fragment() {
 
     private var _binding: FragmentFirstBinding? = null
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
 
@@ -60,7 +51,7 @@ class FirstFragment : Fragment() {
 
         _binding = FragmentFirstBinding.inflate(inflater, container, false)
         binding.composeView.setContent {
-            DownCounterProgress()
+            CountDownProgress().CountDownProgressComposable(dataFlow = viewModel.progressChannel)
         }
         return binding.root
 
@@ -69,41 +60,25 @@ class FirstFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.apply {
-            if (viewModel.progressbarShown) progressBar.visibility = View.VISIBLE
+            if (viewModel.progressbarShown) progress.visibility = View.VISIBLE
             buttonFirst.setOnClickListener {
-                showProgress(true)
                 viewModel.buttonPressed()
+                showProgress(true)
             }
         }
 
-        viewModel.eventChannel.observe(viewLifecycleOwner) { delay ->
-            if (delay > 0) {
-                showProgress(true, delay)
-            } else {
-                showProgress(false)
-                findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
-            }
+        viewModel.navigateChannel.observe(viewLifecycleOwner) { delay ->
+            showProgress(false)
+            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
 
     }
 
-    @Composable
-    fun DownCounterProgress() {
-        Text("Hello from Compose!",
-                color = MaterialTheme.colors.onPrimary,
-            fontSize = 20.sp
-        )
-    }
 
-    private fun showProgress(show: Boolean, delay: Int = 0) {
+    private fun showProgress(show: Boolean) {
         viewModel.progressbarShown = show
         with(binding) {
-            progressCounter.text = delay.toString()
-            if (show){ progress.visibility = View.VISIBLE }else {
-                progress.visibility =
-                    View.GONE
-                progressCounter.text = ""
-            }
+            progress.visibility = if (show) View.VISIBLE else View.GONE
         }
     }
 
